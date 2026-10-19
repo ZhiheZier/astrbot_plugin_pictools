@@ -1,0 +1,80 @@
+{
+  "report_font_size": {
+    "description": "喜报、悲报正文字号",
+    "type": "int",
+    "default": 65,
+    "hint": "支持 24~160 像素；长文字会自动缩小字号以适应画布。"
+  },
+  "match_mode": {
+    "description": "允许无前缀命令",
+    "type": "bool",
+    "default": true,
+    "hint": "开启后发送左对称等完整命令即可触发；关闭后需使用 /左对称。emoji+emoji 始终可直接触发。"
+  },
+  "enable_at_avatar": {
+    "description": "允许处理 @用户的 QQ 头像",
+    "type": "bool",
+    "default": true,
+    "hint": "仅适用于 NapCat / OneBot v11；@机器人只作为唤醒，不作为头像来源。"
+  },
+  "pending_timeout": {
+    "description": "等待用户发图的时间（秒）",
+    "type": "int",
+    "default": 120
+  },
+  "cooldown_seconds": {
+    "description": "同一会话同一用户的处理间隔（秒）",
+    "type": "int",
+    "default": 3,
+    "hint": "0 表示关闭。帮助、取消和等待图片的提示不会启动新的冷却计时。"
+  },
+  "max_concurrent": {
+    "description": "同时处理的最大请求数",
+    "type": "int",
+    "default": 2
+  },
+  "max_file_mb": {
+    "description": "输入及输出文件大小上限（MiB）",
+    "type": "int",
+    "default": 20
+  },
+  "max_pixels": {
+    "description": "单帧最大像素数",
+    "type": "int",
+    "default": 16000000
+  },
+  "max_frames": {
+    "description": "GIF 最大帧数",
+    "type": "int",
+    "default": 200
+  },
+  "max_total_pixels": {
+    "description": "GIF 所有帧的总像素上限",
+    "type": "int",
+    "default": 24000000,
+    "hint": "宽 × 高 × 帧数；超出时拒绝处理，不自动丢帧。"
+  },
+  "download_timeout": {
+    "description": "下载超时（秒）",
+    "type": "int",
+    "default": 30
+  },
+  "process_timeout": {
+    "description": "图片处理时间预算（秒）",
+    "type": "int",
+    "default": 30,
+    "hint": "在解码、逐帧处理及编码前后检查；无法中断正在执行的单次 Pillow 原生调用。"
+  },
+  "allowed_groups": {
+    "description": "允许使用的群号",
+    "type": "list",
+    "default": [],
+    "hint": "空列表允许所有群；此项不限制私聊。请将群号作为字符串填写。"
+  },
+  "allowed_users": {
+    "description": "允许使用的用户 QQ 号",
+    "type": "list",
+    "default": [],
+    "hint": "空列表允许所有用户；非空时同时限制群聊和私聊。请将 QQ 号作为字符串填写。"
+  }
+}

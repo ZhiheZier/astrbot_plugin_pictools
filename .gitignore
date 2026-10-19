@@ -205,3 +205,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+# Local development tools and isolated AstrBot test data
+.dev_deps/
+.test_runtime/

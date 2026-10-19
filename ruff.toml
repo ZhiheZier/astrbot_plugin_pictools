@@ -1,0 +1,7 @@
+target-version = "py312"
+line-length = 88
+cache-dir = ".ruff_cache"
+extend-exclude = [".dev_deps", ".test_runtime"]
+
+[lint]
+select = ["E", "F", "I", "UP", "ASYNC"]

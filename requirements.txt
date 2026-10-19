@@ -1,0 +1,4 @@
+Pillow>=11.2.1,<14
+aiohttp>=3.11.18,<4
+opencv-python-headless>=4.10,<5
+emoji>=2.14,<3
