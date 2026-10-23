@@ -81,7 +81,7 @@ class PluginTests(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self):
         await self.plugin.terminate()
 
-    async def test_emoji_combination_downloads_png_without_avatar_or_upload(self):
+    async def test_emoji_combination_sends_qq_sticker_without_avatar_or_upload(self):
         pending = FakeEvent([Comp.Plain("/左对称")])
         await handle(self.plugin, pending)
         source = base64.b64decode(image_component().file.removeprefix("base64://"))
@@ -98,12 +98,47 @@ class PluginTests(unittest.IsolatedAsyncioTestCase):
                 read.await_args.args[0].startswith("https://www.gstatic.com/")
             )
         self.assertTrue(event.stopped)
-        self.assertIsInstance(result[0][0], Comp.Image)
-        data = base64.b64decode(result[0][0].file.removeprefix("base64://"))
+        self.assertEqual(result, [])
+        event.bot.call_action.assert_awaited_once()
+        sent = event.bot.call_action.await_args
+        self.assertEqual(sent.args, ("send_group_msg",))
+        self.assertEqual(sent.kwargs["group_id"], 456)
+        self.assertEqual(sent.kwargs["self_id"], "999")
+        self.assertEqual(len(sent.kwargs["message"]), 1)
+        segment = sent.kwargs["message"][0]
+        self.assertEqual(segment["type"], "image")
+        self.assertEqual(segment["data"]["sub_type"], 1)
+        self.assertEqual(segment["data"]["summary"], "[合成表情]")
+        data = base64.b64decode(segment["data"]["file"].removeprefix("base64://"))
         with Image.open(io.BytesIO(data)) as image:
             self.assertEqual(image.format, "PNG")
         self.assertIn(self.plugin._key(pending), self.plugin.pending)
         self.assertEqual(self.plugin.active, 0)
+
+    async def test_emoji_sticker_private_routing_and_send_failure(self):
+        source = base64.b64decode(image_component().file.removeprefix("base64://"))
+        event = FakeEvent([Comp.Plain("❤️ + 🔥")], group="")
+        with patch.object(self.plugin.reader, "read", AsyncMock(return_value=source)):
+            self.assertEqual(await handle(self.plugin, event), [])
+            sent = event.bot.call_action.await_args
+            self.assertEqual(sent.args, ("send_private_msg",))
+            self.assertEqual(sent.kwargs["user_id"], 123)
+            self.assertNotIn("group_id", sent.kwargs)
+            self.assertEqual(sent.kwargs["message"][0]["data"]["sub_type"], 1)
+            event.bot.call_action.side_effect = RuntimeError("send failed")
+            with patch("pictools_under_test.main.logger.exception"):
+                result = await handle(self.plugin, event)
+        self.assertIn("图片处理失败", result[0])
+        self.assertEqual(self.plugin.active, 0)
+        self.assertFalse(self.plugin.in_flight)
+
+    async def test_emoji_other_platform_still_returns_image(self):
+        source = base64.b64decode(image_component().file.removeprefix("base64://"))
+        event = FakeEvent([Comp.Plain("😀+😂")], platform="qq_official")
+        with patch.object(self.plugin.reader, "read", AsyncMock(return_value=source)):
+            result = await handle(self.plugin, event)
+        self.assertIsInstance(result[0][0], Comp.Image)
+        event.bot.call_action.assert_not_awaited()
 
     async def test_emoji_errors_release_capacity_and_preserve_pending_upload(self):
         from pictools_under_test.core.media_io import MediaInputError

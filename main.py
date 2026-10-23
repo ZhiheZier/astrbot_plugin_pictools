@@ -330,7 +330,38 @@ class PicToolsPlugin(Star):
                 raise
             finally:
                 self.workers.discard(worker)
-            chain = [Comp.Image.fromBytes(result.data)]
+            output_image = Comp.Image.fromBytes(result.data)
+            if (
+                operation.name == "emoji合成"
+                and event.get_platform_name() == "aiocqhttp"
+            ):
+                # The AstrBot image serializer drops NapCat's sticker fields.
+                message = [
+                    {
+                        "type": "image",
+                        "data": {
+                            "file": output_image.file,
+                            "sub_type": 1,
+                            "summary": "[合成表情]",
+                        },
+                    }
+                ]
+                if result.note:
+                    message.insert(0, {"type": "text", "data": {"text": result.note}})
+                group_id = event.get_group_id()
+                target = (
+                    {"group_id": int(group_id)}
+                    if group_id
+                    else {"user_id": int(event.get_sender_id())}
+                )
+                await event.bot.call_action(
+                    "send_group_msg" if group_id else "send_private_msg",
+                    message=message,
+                    self_id=event.get_self_id(),
+                    **target,
+                )
+                return
+            chain = [output_image]
             if result.note:
                 chain.insert(0, Comp.Plain(result.note + "\n"))
             yield event.chain_result(chain)

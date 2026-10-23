@@ -1,7 +1,7 @@
 name: astrbot_plugin_pictools
 display_name: 图片处理工具
 desc: 图片与 GIF 处理工具箱，支持镜像对称、旋转反色、倒放调速、喜报悲报、趣味表情包和 Emoji 合成。
-version: v1.0.0
+version: v1.0.1
 author: ZhiheZier
 repo: https://github.com/ZhiheZier/astrbot_plugin_pictools
 support_platforms:
