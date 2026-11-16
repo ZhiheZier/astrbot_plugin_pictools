@@ -85,14 +85,26 @@ class EmojiKitchenTests(unittest.TestCase):
         self.assertEqual(emoji_kitchen_url("❤︎", "🔥"), expected)
         self.assertEqual(emoji_kitchen_url("🔴", "🔥"), expected)
 
-    def test_unsupported_emoji_and_missing_pair(self):
-        with self.assertRaisesRegex(ImageProcessingError, "暂不支持"):
-            emoji_kitchen_url("🇨🇳", "😀")
+    def test_unsupported_emoji_error_identifies_each_input(self):
+        for left, right, expected in [
+            ("🇨🇳", "😀", "「🇨🇳」暂不支持"),
+            ("😀", "🇨🇳", "「🇨🇳」暂不支持"),
+            ("🇨🇳", "🇺🇸", "「🇨🇳」、「🇺🇸」暂不支持"),
+            ("🇨🇳", "🇨🇳", "「🇨🇳」暂不支持"),
+        ]:
+            with self.subTest(left=left, right=right):
+                with self.assertRaisesRegex(ImageProcessingError, expected) as error:
+                    emoji_kitchen_url(left, right)
+                self.assertEqual(str(error.exception), f"{expected}，请替换后重试。")
+
+    def test_missing_pair_is_distinct_from_unsupported_emoji(self):
         with patch(
             "pictools_under_test.core.emoji_kitchen._emoji_index",
             return_value=({}, {"1f600": "1f600", "1f602": "1f602"}),
         ):
-            with self.assertRaisesRegex(ImageProcessingError, "暂无合成结果"):
+            with self.assertRaisesRegex(
+                ImageProcessingError, "^这两个 emoji 暂无合成结果，请换一组试试。$"
+            ):
                 emoji_kitchen_url("😀", "😂")
 
     def test_missing_or_corrupt_index_has_a_readable_error(self):

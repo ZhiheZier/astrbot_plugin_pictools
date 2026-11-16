@@ -65,16 +65,20 @@ def emoji_kitchen_url(left: str, right: str) -> str:
     """
     pairs, normalized = _emoji_index()
     codes = []
+    unsupported = []
     for value in (left, right):
         code = "-".join(
             f"{ord(char):x}" for char in value if char not in "\ufe0e\ufe0f"
         )
         canonical = normalized.get(code)
         if canonical is None:
-            raise ImageProcessingError(
-                f"当前 Emoji Kitchen 索引暂不支持 {value}，请换一个 emoji。"
-            )
-        codes.append(canonical)
+            unsupported.append(f"「{value}」")
+        else:
+            codes.append(canonical)
+    if unsupported:
+        raise ImageProcessingError(
+            f"{'、'.join(dict.fromkeys(unsupported))}暂不支持，请替换后重试。"
+        )
     pair = pairs.get("|".join(sorted(codes, reverse=True)))
     if pair is None:
         raise ImageProcessingError("这两个 emoji 暂无合成结果，请换一组试试。")

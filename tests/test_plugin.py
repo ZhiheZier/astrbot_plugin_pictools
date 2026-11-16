@@ -164,6 +164,26 @@ class PluginTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(event.stopped)
             self.assertIn(self.plugin._key(pending), self.plugin.pending)
 
+    async def test_unsupported_emoji_reply_identifies_inputs_without_downloading(self):
+        pending = FakeEvent([Comp.Plain("/摸头")])
+        await handle(self.plugin, pending)
+        for text, expected in [
+            ("🇨🇳+😀", "「🇨🇳」暂不支持"),
+            ("😀+🇨🇳", "「🇨🇳」暂不支持"),
+            ("🇨🇳+🇺🇸", "「🇨🇳」、「🇺🇸」暂不支持"),
+        ]:
+            with self.subTest(text=text):
+                event = FakeEvent([Comp.Plain(text)])
+                with patch.object(self.plugin.reader, "read", AsyncMock()) as read:
+                    result = await handle(self.plugin, event)
+                self.assertIn(expected, result[0])
+                self.assertTrue(event.stopped)
+                read.assert_not_awaited()
+                event.bot.call_action.assert_not_awaited()
+                self.assertEqual(self.plugin.active, 0)
+                self.assertFalse(self.plugin.in_flight)
+                self.assertIn(self.plugin._key(pending), self.plugin.pending)
+
     async def test_emoji_respects_permissions_cooldown_and_concurrency(self):
         event = FakeEvent([Comp.Plain("😀+😂")])
         self.plugin.config["allowed_users"] = ["other"]
